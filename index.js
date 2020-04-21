@@ -133,7 +133,7 @@
      */
     Runner.defaultDimensions = {
         WIDTH: DEFAULT_WIDTH,
-        HEIGHT: 150
+        HEIGHT: 310
     };
 
 
@@ -292,6 +292,7 @@
             } else {
                 Runner.imageSprite = document.getElementById('offline-resources-1x');
                 this.spriteDef = Runner.spriteDefinition.LDPI;
+                Runner.imageSpriteUp = document.getElementById('offline-resources-1x-up');
             }
 
             if (Runner.imageSprite.complete) {
@@ -717,7 +718,7 @@
                 e.type == Runner.events.MOUSEDOWN;
 
             if (this.isRunning() && isjumpKey) {
-                this.tRex.endJump();
+                //this.tRex.endJump();
             } else if (Runner.keycodes.DUCK[keyCode]) {
                 this.tRex.speedDrop = false;
                 this.tRex.setDuck(false);
@@ -1346,11 +1347,19 @@
                     sourceX += sourceWidth * this.currentFrame;
                 }
 
-                this.canvasCtx.drawImage(Runner.imageSprite,
-                    sourceX, this.spritePos.y,
-                    sourceWidth * this.size, sourceHeight,
-                    this.xPos, this.yPos,
-                    this.typeConfig.width * this.size, this.typeConfig.height);
+                if(this.yPos===54 || this.yPos===55){
+                    this.canvasCtx.drawImage(Runner.imageSpriteUp,
+                        sourceX,(this.yPos===55) ? this.spritePos.y + 30 : this.spritePos.y + 15,
+                        sourceWidth * this.size, sourceHeight,
+                        this.xPos,this.yPos ,
+                        this.typeConfig.width * this.size, this.typeConfig.height);
+                } else {
+                    this.canvasCtx.drawImage(Runner.imageSprite,
+                        sourceX, this.spritePos.y,
+                        sourceWidth * this.size, sourceHeight,
+                        this.xPos, this.yPos,
+                        this.typeConfig.width * this.size, this.typeConfig.height);
+                }
             },
 
             /**
@@ -1433,7 +1442,7 @@
             type: 'CACTUS_SMALL',
             width: 17,
             height: 35,
-            yPos: 105,
+            yPos: [260, 55],
             multipleSpeed: 4,
             minGap: 120,
             minSpeed: 0,
@@ -1447,7 +1456,7 @@
             type: 'CACTUS_LARGE',
             width: 25,
             height: 50,
-            yPos: 90,
+            yPos: [250,54],
             multipleSpeed: 7,
             minGap: 120,
             minSpeed: 0,
@@ -1461,7 +1470,7 @@
             type: 'PTERODACTYL',
             width: 46,
             height: 40,
-            yPos: [100, 75, 50], // Variable height.
+            yPos: [240, 200, 100, 75], // Variable height.
             yPosMobile: [100, 50], // Variable height mobile.
             multipleSpeed: 999,
             minSpeed: 8.5,
@@ -1527,9 +1536,9 @@
         GRAVITY: 0.6,
         HEIGHT: 47,
         HEIGHT_DUCK: 25,
-        INIITAL_JUMP_VELOCITY: -10,
+        INIITAL_JUMP_VELOCITY: -4,
         INTRO_DURATION: 1500,
-        MAX_JUMP_HEIGHT: 30,
+        MAX_JUMP_HEIGHT: 0,
         MIN_JUMP_HEIGHT: 30,
         SPEED_DROP_COEFFICIENT: 3,
         SPRITE_WIDTH: 262,
@@ -1670,7 +1679,7 @@
             }
 
             // Speed drop becomes duck if the down key is still being pressed.
-            if (this.speedDrop && this.yPos == this.groundYPos) {
+            if (this.speedDrop && this.yPos == this.groundYPos ) {
                 this.speedDrop = false;
                 this.setDuck(true);
             }
@@ -1701,20 +1710,34 @@
 
             // Ducking.
             if (this.ducking && this.status != Trex.status.CRASHED) {
-                this.canvasCtx.drawImage(Runner.imageSprite, sourceX, sourceY,
-                    sourceWidth, sourceHeight,
-                    this.xPos, this.yPos,
-                    this.config.WIDTH_DUCK, this.config.HEIGHT);
+                if(this.config.GRAVITY > 0) {
+                    this.canvasCtx.drawImage(Runner.imageSprite, sourceX, sourceY,
+                        sourceWidth, sourceHeight,
+                        this.xPos, this.yPos,
+                        this.config.WIDTH_DUCK, this.config.HEIGHT);
+                } else {
+                    this.canvasCtx.drawImage(Runner.imageSpriteUp, sourceX-170, sourceY+16,
+                        sourceWidth, sourceHeight,
+                        this.xPos, this.yPos,
+                        this.config.WIDTH_DUCK, this.config.HEIGHT);
+                }
             } else {
                 // Crashed whilst ducking. Trex is standing up so needs adjustment.
                 if (this.ducking && this.status == Trex.status.CRASHED) {
                     this.xPos++;
                 }
                 // Standing / running
-                this.canvasCtx.drawImage(Runner.imageSprite, sourceX, sourceY,
-                    sourceWidth, sourceHeight,
-                    this.xPos, this.yPos,
-                    this.config.WIDTH, this.config.HEIGHT);
+                if(this.config.GRAVITY > 0) {
+                    this.canvasCtx.drawImage(Runner.imageSprite, sourceX, sourceY,
+                        sourceWidth, sourceHeight,
+                        this.xPos, this.yPos,
+                        this.config.WIDTH, this.config.HEIGHT);
+                } else {
+                    this.canvasCtx.drawImage(Runner.imageSpriteUp, sourceX-170, sourceY+16,
+                        sourceWidth, sourceHeight,
+                        this.xPos, this.yPos,
+                        this.config.WIDTH, this.config.HEIGHT);
+                }
             }
         },
 
@@ -1749,10 +1772,16 @@
          * @param {number} speed
          */
         startJump: function (speed) {
+
             if (!this.jumping) {
                 this.update(0, Trex.status.JUMPING);
                 // Tweak the jump velocity based on the speed.
-                this.jumpVelocity = this.config.INIITAL_JUMP_VELOCITY - (speed / 10);
+                if(this.config.GRAVITY > 0) {
+                    this.jumpVelocity = this.config.INIITAL_JUMP_VELOCITY - (speed / 10);
+                } else {
+                    this.jumpVelocity = -this.config.INIITAL_JUMP_VELOCITY + (speed / 10);
+                }
+                this.config.GRAVITY = -this.config.GRAVITY;
                 this.jumping = true;
                 this.reachedMinHeight = false;
                 this.speedDrop = false;
@@ -1795,12 +1824,17 @@
 
             // Reached max height
             if (this.yPos < this.config.MAX_JUMP_HEIGHT || this.speedDrop) {
-                this.endJump();
+               // this.endJump();
             }
 
             // Back down at ground level. Jump completed.
-            if (this.yPos > this.groundYPos) {
+            if(this.yPos > this.groundYPos) {
                 this.reset();
+                this.jumpCount++;
+            }
+
+            if(this.yPos < 50) {
+                this.resetTop();
                 this.jumpCount++;
             }
 
@@ -1832,7 +1866,11 @@
          * Reset the t-rex to running at start of game.
          */
         reset: function () {
-            this.yPos = this.groundYPos;
+            if(this.config.GRAVITY>0){
+                this.yPos = this.groundYPos;
+            } else {
+                this.yPos = 50;
+            }
             this.jumpVelocity = 0;
             this.jumping = false;
             this.ducking = false;
@@ -1840,7 +1878,18 @@
             this.midair = false;
             this.speedDrop = false;
             this.jumpCount = 0;
-        }
+        },
+
+        resetTop: function () {
+            this.yPos = 50;
+            this.jumpVelocity = 0;
+            this.jumping = false;
+            this.ducking = false;
+            this.update(0, Trex.status.RUNNING);
+            this.midair = false;
+            this.speedDrop = false;
+            this.jumpCount = 0;
+        },
     };
 
 
@@ -2136,9 +2185,9 @@
     Cloud.config = {
         HEIGHT: 14,
         MAX_CLOUD_GAP: 400,
-        MAX_SKY_LEVEL: 30,
+        MAX_SKY_LEVEL: 84,
         MIN_CLOUD_GAP: 100,
-        MIN_SKY_LEVEL: 71,
+        MIN_SKY_LEVEL: 125,
         WIDTH: 46
     };
 
@@ -2169,7 +2218,7 @@
             this.canvasCtx.drawImage(Runner.imageSprite, this.spritePos.x,
                 this.spritePos.y,
                 sourceWidth, sourceHeight,
-                this.xPos, this.yPos,
+                this.xPos, this.yPos ,
                 Cloud.config.WIDTH, Cloud.config.HEIGHT);
 
             this.canvasCtx.restore();
@@ -2313,7 +2362,7 @@
                 for (var i = 0; i < NightMode.config.NUM_STARS; i++) {
                     this.canvasCtx.drawImage(Runner.imageSprite,
                         starSourceX, this.stars[i].sourceY, starSize, starSize,
-                        Math.round(this.stars[i].x), this.stars[i].y,
+                        Math.round(this.stars[i].x), this.stars[i].y + 54 ,
                         NightMode.config.STAR_SIZE, NightMode.config.STAR_SIZE);
                 }
             }
@@ -2321,7 +2370,7 @@
             // Moon.
             this.canvasCtx.drawImage(Runner.imageSprite, moonSourceX,
                 this.spritePos.y, moonSourceWidth, moonSourceHeight,
-                Math.round(this.xPos), this.yPos,
+                Math.round(this.xPos), this.yPos + 54 ,
                 moonOutputWidth, NightMode.config.HEIGHT);
 
             this.canvasCtx.globalAlpha = 1;
@@ -2366,18 +2415,17 @@
      * @param {Object} spritePos Horizon position in sprite.
      * @constructor
      */
-    function HorizonLine(canvas, spritePos) {
+    function HorizonLineBottom(canvas, spritePos) {
         this.spritePos = spritePos;
         this.canvas = canvas;
         this.canvasCtx = canvas.getContext('2d');
         this.sourceDimensions = {};
-        this.dimensions = HorizonLine.dimensions;
+        this.dimensions = HorizonLineBottom.dimensions;
         this.sourceXPos = [this.spritePos.x, this.spritePos.x +
             this.dimensions.WIDTH];
         this.xPos = [];
         this.yPos = 0;
         this.bumpThreshold = 0.5;
-
         this.setSourceDimensions();
         this.draw();
     };
@@ -2387,34 +2435,34 @@
      * Horizon line dimensions.
      * @enum {number}
      */
-    HorizonLine.dimensions = {
+    HorizonLineBottom.dimensions = {
         WIDTH: 600,
         HEIGHT: 12,
-        YPOS: 127
+        YPOS: 287
     };
 
 
-    HorizonLine.prototype = {
+    HorizonLineBottom.prototype = {
         /**
          * Set the source dimensions of the horizon line.
          */
         setSourceDimensions: function () {
 
-            for (var dimension in HorizonLine.dimensions) {
+            for (var dimension in HorizonLineBottom.dimensions) {
                 if (IS_HIDPI) {
                     if (dimension != 'YPOS') {
                         this.sourceDimensions[dimension] =
-                            HorizonLine.dimensions[dimension] * 2;
+                            HorizonLineBottom.dimensions[dimension] * 2;
                     }
                 } else {
                     this.sourceDimensions[dimension] =
-                        HorizonLine.dimensions[dimension];
+                        HorizonLineBottom.dimensions[dimension];
                 }
-                this.dimensions[dimension] = HorizonLine.dimensions[dimension];
+                this.dimensions[dimension] = HorizonLineBottom.dimensions[dimension];
             }
 
-            this.xPos = [0, HorizonLine.dimensions.WIDTH];
-            this.yPos = HorizonLine.dimensions.YPOS;
+            this.xPos = [0, HorizonLineBottom.dimensions.WIDTH];
+            this.yPos = HorizonLineBottom.dimensions.YPOS;
         },
 
         /**
@@ -2481,7 +2529,126 @@
          */
         reset: function () {
             this.xPos[0] = 0;
-            this.xPos[1] = HorizonLine.dimensions.WIDTH;
+            this.xPos[1] = HorizonLineBottom.dimensions.WIDTH;
+        }
+    };
+
+
+    ////////////////////
+    function HorizonLineTop(canvas, spritePos) {
+        this.spritePos = spritePos;
+        this.canvas = canvas;
+        this.canvasCtx = canvas.getContext('2d');
+        this.sourceDimensions = {};
+        this.dimensions = HorizonLineTop.dimensions;
+        this.sourceXPos = [this.spritePos.x, this.spritePos.x +
+        this.dimensions.WIDTH];
+        this.xPos = [];
+        this.yPos = 0;
+        this.bumpThreshold = 0.5;
+        this.setSourceDimensions();
+        this.draw();
+    };
+
+
+    /**
+     * Horizon line dimensions.
+     * @enum {number}
+     */
+    HorizonLineTop.dimensions = {
+        WIDTH: 600,
+        HEIGHT: 12,
+        YPOS: 54
+    };
+
+    HorizonLineTop.prototype = {
+        /**
+         * Set the source dimensions of the horizon line.
+         */
+        setSourceDimensions: function () {
+
+            for (var dimension in HorizonLineTop.dimensions) {
+                if (IS_HIDPI) {
+                    if (dimension != 'YPOS') {
+                        this.sourceDimensions[dimension] =
+                            HorizonLineTop.dimensions[dimension] * 2;
+                    }
+                } else {
+                    this.sourceDimensions[dimension] =
+                        HorizonLineTop.dimensions[dimension];
+                }
+                this.dimensions[dimension] = HorizonLineTop.dimensions[dimension];
+            }
+
+            this.xPos = [0, HorizonLineTop.dimensions.WIDTH];
+            this.yPos = HorizonLineTop.dimensions.YPOS;
+        },
+
+        /**
+         * Return the crop x position of a type.
+         */
+        getRandomType: function () {
+            return Math.random() > this.bumpThreshold ? this.dimensions.WIDTH : 0;
+        },
+
+        /**
+         * Draw the horizon line.
+         */
+        draw: function () {
+            this.canvasCtx.drawImage(Runner.imageSpriteUp, this.sourceXPos[0],
+                this.spritePos.y-50,
+                this.sourceDimensions.WIDTH, this.sourceDimensions.HEIGHT,
+                this.xPos[0], this.yPos,
+                this.dimensions.WIDTH, this.dimensions.HEIGHT);
+
+            this.canvasCtx.drawImage(Runner.imageSpriteUp, this.sourceXPos[1],
+                this.spritePos.y-50,
+                this.sourceDimensions.WIDTH, this.sourceDimensions.HEIGHT,
+                this.xPos[1], this.yPos,
+                this.dimensions.WIDTH, this.dimensions.HEIGHT);
+        },
+
+        /**
+         * Update the x position of an indivdual piece of the line.
+         * @param {number} pos Line position.
+         * @param {number} increment
+         */
+        updateXPos: function (pos, increment) {
+            var line1 = pos;
+            var line2 = pos == 0 ? 1 : 0;
+
+            this.xPos[line1] -= increment;
+            this.xPos[line2] = this.xPos[line1] + this.dimensions.WIDTH;
+
+            if (this.xPos[line1] <= -this.dimensions.WIDTH) {
+                this.xPos[line1] += this.dimensions.WIDTH * 2;
+                this.xPos[line2] = this.xPos[line1] - this.dimensions.WIDTH;
+                this.sourceXPos[line1] = this.getRandomType() + this.spritePos.x;
+            }
+        },
+
+        /**
+         * Update the horizon line.
+         * @param {number} deltaTime
+         * @param {number} speed
+         */
+        update: function (deltaTime, speed) {
+            var increment = Math.floor(speed * (FPS / 1000) * deltaTime);
+
+            if (this.xPos[0] <= 0) {
+                this.updateXPos(0, increment);
+            } else {
+                this.updateXPos(1, increment);
+            }
+            this.draw();
+        },
+
+        /**
+         * Reset horizon to the starting position.
+         */
+        reset: function () {
+            this.xPos[0] = 0;
+            this.xPos[1] = HorizonLineTop.dimensions.WIDTH;
         }
     };
 
@@ -2515,6 +2682,7 @@
 
         // Horizon
         this.horizonLine = null;
+        this.horizonLineTop = null;
         this.init();
     };
 
@@ -2538,7 +2706,8 @@
          */
         init: function () {
             this.addCloud();
-            this.horizonLine = new HorizonLine(this.canvas, this.spritePos.HORIZON);
+            this.horizonLineBottom = new HorizonLineBottom(this.canvas, this.spritePos.HORIZON);
+            this.horizonLineTop = new HorizonLineTop(this.canvas, this.spritePos.HORIZON);
             this.nightMode = new NightMode(this.canvas, this.spritePos.MOON,
                 this.dimensions.WIDTH);
         },
@@ -2553,7 +2722,8 @@
          */
         update: function (deltaTime, currentSpeed, updateObstacles, showNightMode) {
             this.runningTime += deltaTime;
-            this.horizonLine.update(deltaTime, currentSpeed);
+            this.horizonLineBottom.update(deltaTime, currentSpeed);
+            this.horizonLineTop.update(deltaTime, currentSpeed);
             this.nightMode.update(showNightMode);
             this.updateClouds(deltaTime, currentSpeed);
 
@@ -2683,7 +2853,8 @@
          */
         reset: function () {
             this.obstacles = [];
-            this.horizonLine.reset();
+            this.horizonLineBottom.reset();
+            this.horizonLineTop.reset();
             this.nightMode.reset();
         },
 
